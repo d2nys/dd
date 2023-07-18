@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shooter Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    
+    canvas {
+      background-color: #000;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  
+  <script>
+    // Game Variables
+    var canvas = document.getElementById('game-canvas');
+    var context = canvas.getContext('2d');
+    var player = {
+      x: canvas.width / 2,
+      y: canvas.height - 50,
+      width: 50,
+      height: 50,
+      speed: 5,
+      color: '#00f'
+    };
+    var bullets = [];
+    var enemies = [];
+    var score = 0;
+    
+    // Event Listeners
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('mousedown', shootBullet);
+    
+    // Handle Keyboard Events
+    var leftPressed = false;
+    var rightPressed = false;
+    
+    function handleKeyDown(event) {
+      if (event.keyCode === 37) {
+        leftPressed = true;
+      } else if (event.keyCode === 39) {
+        rightPressed = true;
+      }
+    }
+    
+    function handleKeyUp(event) {
+      if (event.keyCode === 37) {
+        leftPressed = false;
+      } else if (event.keyCode === 39) {
+        rightPressed = false;
+      }
+    }
+    
+    // Update Game State
+    function update() {
+      // Move Player
+      if (leftPressed && player.x > 0) {
+        player.x -= player.speed;
+      } else if (rightPressed && player.x < canvas.width - player.width) {
+        player.x += player.speed;
+      }
+      
+      // Move Bullets
+      for (var i = 0; i < bullets.length; i++) {
+        bullets[i].y -= 8;
+        if (bullets[i].y < 0) {
+          bullets.splice(i, 1);
+          i--;
+        }
+      }
+      
+      // Move Enemies
+      for (var i = 0; i < enemies.length; i++) {
+        enemies[i].y += 3;
+        
+        // Check Collision with Player
+        if (
+          enemies[i].y + enemies[i].height >= player.y &&
+          enemies[i].y <= player.y + player.height &&
+          enemies[i].x + enemies[i].width >= player.x &&
+          enemies[i].x <= player.x + player.width
+        ) {
+          // Game Over
+          alert('Game Over!');
+          location.reload();
+        }
+        
+        // Check Collision with Bullets
+        for (var j = 0; j < bullets.length; j++) {
+          if (
+            bullets[j].y <= enemies[i].y + enemies[i].height &&
+            bullets[j].y >= enemies[i].y &&
+            bullets[j].x <= enemies[i].x + enemies[i].width &&
+            bullets[j].x + bullets[j].width >= enemies[i].x
+          ) {
+            // Remove Enemy and Bullet
+            bullets.splice(j, 1);
+            j--;
+            enemies.splice(i, 1);
+            i--;
+            score += 10;
+          }
+        }
+        
+        // Remove Enemy if it reaches the bottom
+        if (enemies[i] && enemies[i].y > canvas.height) {
+          enemies.splice(i, 1);
+          i--;
+        }
+      }
+      
+      // Create New Enemies
+      if (Math.random() < 0.02) {
+        var enemy = {
+          x: Math.random() * (canvas.width - 30) + 15,
+          y: 0,
+          width: 30,
+          height: 30
+        };
+        enemies.push(enemy);
+      }
+    }
+    
+    // Draw Game State
+    function draw() {
+      // Clear Canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw Player
+      context.fillStyle = player.color;
+      context.fillRect(player.x, player.y, player.width, player.height);
+      
+      // Draw Bullets
+      for (var i = 0; i < bullets.length; i++) {
+        context.fillStyle = '#f00';
+        context.fillRect(bullets[i].x, bullets[i].y, bullets[i].width, bullets[i].height);
+      }
+      
+      // Draw Enemies
+      for (var i = 0; i < enemies.length; i++) {
+        context.fillStyle = '#0f0';
+        context.fillRect(enemies[i].x, enemies[i].y, enemies[i].width, enemies[i].height);
+      }
+      
+      // Draw Score
+      context.fillStyle = '#fff';
+      context.font = '24px Arial';
+      context.fillText('Score: ' + score, 10, 30);
+    }
+    
+    // Game Loop
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // Shoot Bullet
+    function shootBullet(event) {
+      var bullet = {
+        x: player.x + player.width / 2 - 2.5,
+        y: player.y,
+        width: 5,
+        height: 10
+      };
+      bullets.push(bullet);
+    }
+    
+    // Start Game
+    gameLoop();
+  </script>
+</body>
+</html>
